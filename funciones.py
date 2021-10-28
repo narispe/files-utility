@@ -1,5 +1,6 @@
 import os
 from mutagen.mp4 import MP4
+from natsort import natsorted
 
 
 def entrada(mensaje, n_max):
@@ -26,14 +27,14 @@ def reemplazar_en_nombre():
 
 
 def renombrar_con_id():
-    base = input("base")
+    base = input("Base con # = id:\n")
     filtro = seleccionar_filtro()
     paths = list(filter(lambda x: filtro(x), os.listdir()))
     i = 1
-    for path in sorted(paths):
+    for path in natsorted(paths):
         nombre, ext = os.path.splitext(path)
-        nuevo_nombre = f"{base} " + f"{i:02d}"
-        os.rename(path, nuevo_nombre+ext)
+        nuevo_nombre = base.replace("#", f"{i:02d}")
+        os.rename(path, nuevo_nombre + ext)
         i += 1
 
 
@@ -48,26 +49,45 @@ def editar_Media_Data():
         archivo.save()
 
 
+def distribuir():
+    identificadores = input("Identificador separados por \",\": ").split(",")
+    etiquetas = input("Etiquetas separados por \",\": ").split(",")
+    diccionario = dict()
+    for par in zip(identificadores, etiquetas):
+        id_, label = par
+        diccionario[id_] = label
+    archivos = list(filter(lambda x: os.path.isfile(x), os.listdir()))
+    for archivo in archivos:
+        identificador = list(filter(lambda x: x in archivo, diccionario.keys()))
+        if not identificador:
+            pass
+        else:
+            destino = diccionario[identificador[0]]
+            if not os.path.isdir(destino):
+                os.mkdir(destino)
+            os.rename(archivo, os.path.join(destino, archivo))
+
+
 def redistribuir():
-    etiquetas = input("Etiquetas separadas por \",\":\n").split(",")
-    print(etiquetas)
+    identificadores = input("Identificador separados por \",\": ").split(",")
+    etiquetas = input("Etiquetas separados por \",\": ").split(",")
+    diccionario = dict()
+    for par in zip(identificadores, etiquetas):
+        id_, label = par
+        diccionario[id_] = label
     carpetas = list(filter(lambda x: os.path.isdir(x), os.listdir()))
-    print(carpetas)
     for carpeta in carpetas:
-        print(os.listdir(carpeta))
         archivos = list(filter(lambda x: os.path.isfile(os.path.join(carpeta, x)),
                                os.listdir(carpeta)))
-        print(archivos)
         for archivo in archivos:
-            destinos = list(filter(lambda x: x in archivo, etiquetas))
-            print(destinos)
-            if not destinos:
+            identificador = list(filter(lambda x: x in archivo, diccionario.keys()))
+            if not identificador:
                 pass
             else:
-                destino = destinos[0]
+                destino = diccionario[identificador[0]]
                 if not os.path.isdir(destino):
                     os.mkdir(destino)
-                os.rename(os.path.join(carpeta, archivo), os.path.join(destino, archivo))
+                os.rename(archivo, os.path.join(destino, archivo))
         os.rmdir(carpeta)
 
 
