@@ -27,12 +27,15 @@ def reemplazar_en_nombre():
 
 def renombrar_con_id():
     base = input("Base con # = id:\n")
+    i = int(input("ID inicial: "))
     filtro = seleccionar_filtro()
     if filtro == os.path.isfile:
         ext = input("Extensión: ")
-    paths = list(filter(lambda x: filtro(x) and os.path.splitext(x)[1] == ext,
-                        os.listdir()))
-    i = 1
+        paths = list(filter(lambda x: filtro(x) and os.path.splitext(x)[1] == ext,
+                            os.listdir()))
+    else:
+        paths = list(filter(lambda x: filtro(x),
+                            os.listdir()))
     for path in natsorted(paths):
         nombre, ext = os.path.splitext(path)
         nuevo_nombre = base.replace("#", f"{i:02d}")
@@ -102,12 +105,38 @@ def subir():
         os.rmdir(carpeta)
 
 
+def limpiar():
+    ext = input("Extensión: ")
+    paths = list(filter(lambda x: os.path.isfile(x) and os.path.splitext(x)[1] == ext,
+                        os.listdir()))
+    for path in natsorted(paths):
+        nombre, ext = os.path.splitext(path)
+        nuevo_nombre = limpiar_nombre(nombre)
+        os.rename(path, nuevo_nombre + ext)
+
+
+def limpiar_nombre(nombre):
+    resultado = ""
+    eliminando = False
+    i = 0
+    for i in range(len(nombre)):
+        caracter = nombre[i]
+        if caracter == "[":
+            eliminando = True
+        if not eliminando:
+            resultado += caracter
+        if caracter == " " and nombre[i-1] == "]":
+            eliminando = False
+    return resultado.strip()
+
+
 dic_funciones = {1: reemplazar_en_nombre,
                  2: renombrar_con_id,
                  3: editar_Media_Data,
                  4: distribuir,
                  5: redistribuir,
-                 6: subir}
+                 6: subir,
+                 7: limpiar}
 
 
 if __name__ == "__main__":
@@ -118,6 +147,7 @@ if __name__ == "__main__":
                  "[4] Distribuir\n"
                  "[5] Redistribuir\n"
                  "[6] Subir\n"
+                 "[7] Limpiar\n"
                  ": ",
-                 6)
+                 7)
     dic_funciones[int(op)]()
