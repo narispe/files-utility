@@ -1,6 +1,7 @@
 import os
 from mutagen.mp4 import MP4
 from natsort import natsorted
+import easygui
 
 
 def entrada(mensaje, n_max):
@@ -140,7 +141,7 @@ dic_funciones = {1: reemplazar_en_nombre,
 
 
 if __name__ == "__main__":
-
+    os.chdir(easygui.diropenbox())
     op = entrada("[1] Reemplazar\n"
                  "[2] Renombrar\n"
                  "[3] Editar metadata\n"
@@ -151,3 +152,4 @@ if __name__ == "__main__":
                  ": ",
                  7)
     dic_funciones[int(op)]()
+    print("FIN")
