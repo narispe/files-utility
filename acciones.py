@@ -1,5 +1,6 @@
 import os
 import easygui
+from tqdm import tqdm
 from pymkv import MKVFile
 from mutagen.mp4 import MP4
 from natsort import natsorted
@@ -8,9 +9,9 @@ from funciones import obtener_paths, limpiar_info
 
 def subir():
     carpetas = list(filter(lambda x: os.path.isdir(x), os.listdir()))
-    for carpeta in carpetas:
+    for carpeta in tqdm(carpetas):
         archivos = os.listdir(carpeta)
-        for archivo in archivos:
+        for archivo in tqdm(archivos):
             try:
                 os.rename(os.path.join(carpeta, archivo), archivo)
             except FileExistsError as error:
@@ -25,7 +26,7 @@ def limpiar_nombres():
     ext = input("Extensión: ")
     paths = list(filter(lambda x: os.path.isfile(x) and os.path.splitext(x)[1] == ext,
                         os.listdir()))
-    for path in natsorted(paths):
+    for path in tqdm(natsorted(paths)):
         nombre, ext = os.path.splitext(path)
         nuevo_nombre = limpiar_info(nombre, "[]")
         os.rename(path, nuevo_nombre + ext)
@@ -35,7 +36,7 @@ def renombrar_con_id():
     base = input("Nombre base (#=ID): ")
     i = int(input("ID inicial: "))
     paths = obtener_paths()
-    for path in natsorted(paths):
+    for path in tqdm(natsorted(paths)):
         nombre, ext = os.path.splitext(path)
         nuevo_nombre = base.replace("#", f"{i:02d}")
         os.rename(path, nuevo_nombre + ext)
@@ -46,7 +47,7 @@ def reemplazar_en_nombre():
     reemplazar = input("Frase a reemplazar: ")
     reemplazo = input("Reemplazo: ")
     paths = obtener_paths()
-    for path in paths:
+    for path in tqdm(paths):
         nuevo_nombre = path.replace(reemplazar, reemplazo)
         os.rename(path, nuevo_nombre)
 
@@ -60,7 +61,7 @@ def distribuir():
         etiqueta, carpeta = par
         destinos[etiqueta] = carpeta
     archivos = list(filter(lambda x: os.path.isfile(x), os.listdir()))
-    for archivo in archivos:
+    for archivo in tqdm(archivos):
         for etiqueta in etiquetas:
             if etiqueta in archivo:
                 try:
@@ -79,10 +80,10 @@ def redistribuir():
         etiqueta, carpeta = par
         destinos[etiqueta] = carpeta
     carpetas = list(filter(lambda x: os.path.isdir(x), os.listdir()))
-    for carpeta in carpetas:
+    for carpeta in tqdm(carpetas):
         archivos = list(filter(lambda x: os.path.isfile(os.path.join(carpeta, x)),
                                os.listdir(carpetas)))
-        for archivo in archivos:
+        for archivo in tqdm(archivos):
             for etiqueta in etiquetas:
                 if etiqueta in archivo:
                     try:
@@ -119,7 +120,7 @@ def cambiar_idioma():
         output_dir = easygui.diropenbox()
         i = 1
         print("INICIO")
-        for path in paths:
+        for path in tqdm(paths):
             mkv = MKVFile(file_path=path)
             tracks = mkv.get_track()
             audios = list(filter(lambda x: x.track_type == "audio",
@@ -138,7 +139,7 @@ def cambiar_idioma():
                     sub.forced_track = enabled
                     sub.default_track = enabled
             mkv.mux(os.path.join(output_dir, path), silent=True)
-            print(f"{i}/{len(paths)}:{os.path.join(output_dir, path)}")
+            print(f"{os.path.join(output_dir, path)} LISTO")
             i += 1
 
 

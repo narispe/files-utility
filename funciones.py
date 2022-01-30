@@ -58,4 +58,11 @@ def obtener_tracks_info():
 
 if __name__ == "__main__":
     pass
-    obtener_tracks_info()
+    # obtener_tracks_info()
+    from tqdm import tqdm
+    import time
+    x = "* "*10
+    for i in tqdm(x.split(" ")):
+        for j in tqdm(x.split(" ")):
+            time.sleep(1)
+        
