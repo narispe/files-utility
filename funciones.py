@@ -1,9 +1,11 @@
 import os
 import easygui
-from mutagen.mp4 import MP4
+from pymkv import MKVFile
+from beautifultable import BeautifulTable
 
 
 def seleccionar_dir():
+    print("Selecciona la carpeta con los archivos")
     os.chdir(easygui.diropenbox())
 
 
@@ -39,3 +41,21 @@ def limpiar_info(entrada, caracteres_entorno=str):
         if caracter == " " and entrada[i-1] == caracter_final:
             eliminando = False
     return resultado.strip()
+
+
+def obtener_tracks_info():
+    path = easygui.fileopenbox()
+    mkv = MKVFile(file_path=path)
+    tracks = mkv.get_track()
+    tabla = BeautifulTable()
+    tabla.column_headers = ["ID", "Nombre", "Tipo", "Idioma", "Defecto", "Forzado"]
+    for track in tracks:
+        tabla.rows.append([track.track_id, track.track_name, track.track_type, track.language,
+                           track.default_track, track.forced_track])
+    print(path)
+    print(tabla)
+
+
+if __name__ == "__main__":
+    pass
+    obtener_tracks_info()
