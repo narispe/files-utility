@@ -1,12 +1,12 @@
 import os
 import easygui
+from tqdm import tqdm
 from pymkv import MKVFile
 from beautifultable import BeautifulTable
 
 
 def seleccionar_dir():
-    print("Selecciona la carpeta con los archivos")
-    os.chdir(easygui.diropenbox())
+    os.chdir(easygui.diropenbox(msg="Selecciona la carpeta input"))
 
 
 def manejar_entrada(mensaje, n_max):
@@ -43,26 +43,25 @@ def limpiar_info(entrada, caracteres_entorno=str):
     return resultado.strip()
 
 
-def obtener_tracks_info():
-    path = easygui.fileopenbox()
+def obtener_tracks_info(path=None):
+    if path is None:
+        path = easygui.fileopenbox()
     mkv = MKVFile(file_path=path)
     tracks = mkv.get_track()
     tabla = BeautifulTable()
     tabla.column_headers = ["ID", "Nombre", "Tipo", "Idioma", "Defecto", "Forzado"]
+    idiomas_subs = list()
+    subs_multiples = False
     for track in tracks:
         tabla.rows.append([track.track_id, track.track_name, track.track_type, track.language,
                            track.default_track, track.forced_track])
-    print(path)
-    print(tabla)
+        if track.type == "subtitles":
+            if track.language not in idiomas_subs:
+                idiomas_subs.append(track.language)
+            else:
+                subs_multiples = True
+    return tabla, subs_multiples
 
 
 if __name__ == "__main__":
     pass
-    # obtener_tracks_info()
-    from tqdm import tqdm
-    import time
-    x = "* "*10
-    for i in tqdm(x.split(" ")):
-        for j in tqdm(x.split(" ")):
-            time.sleep(1)
-        
