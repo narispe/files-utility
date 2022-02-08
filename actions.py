@@ -1,10 +1,9 @@
-import os
-import easygui
 from tqdm import tqdm
 from pymkv import MKVFile
 from natsort import natsorted
-from functions import get_paths, clear_name, get_mkv_info
 from mutagen.mp4 import MP4
+import os
+from functions import get_paths, clear_name
 
 
 def raise_files(base_path):
@@ -29,9 +28,8 @@ def clear_files_names(base_path, extension):
     pgb = tqdm(files_paths)
     pgb.set_description(os.path.basename(base_path))
     for file_path in pgb:
-        file_name, file_ext = os.path.splitext(file_path)
-        new_file_name = clear_name(file_name)
-        new_file_path = os.path.join(base_path, new_file_name + file_ext)
+        new_file_name = clear_name(os.path.basename(file_path))
+        new_file_path = os.path.join(base_path, new_file_name + extension)
         os.rename(file_path, new_file_path)
 
 
@@ -91,29 +89,49 @@ def re_distribute(base_path, labels, categories):
                     break
 
 
-def edite_mkv(base_path, output_path, audio_id, subs_id, delete_title):
+def edite_mkv(base_path, output_path, audio_choose, subs_choose, delete_title=False, titles=None):
     files_paths = get_paths(base_path, ext=".mkv")
     pgb = tqdm(natsorted(files_paths))
+    errors = list()
     for file_path in pgb:
         pgb.set_description(os.path.basename(file_path))
         mkv = MKVFile(file_path)
-        if delete_title:
-            mkv.title = ""
         tracks = mkv.get_track()
         audio_tracks = list(filter(lambda x: x.track_type == "audio",
                                    tracks))
         subs_tracks = list(filter(lambda x: x.track_type == "subtitles",
                                   tracks))
-        for audio in audio_tracks:
-            enabled = (audio.track_id == audio_id)
-            audio.default_track = enabled
-            audio.forced_track = False
-        for sub in subs_tracks:
-            enabled = (sub.track_id == subs_id)
-            sub.default_track = enabled
-            # sub.forced_track = enabled
-        mkv.mux(os.path.join(output_path, os.path.basename(file_path)),
-                silent=True)
+
+        if delete_title:
+            mkv.title = ""
+        elif titles is not None:
+            mkv.title = titles[files_paths.index(file_path)]
+
+        if len(audio_tracks) > 1 and audio_choose is not None:
+            for audio in audio_tracks:
+                enabled = (audio.track_id == audio_choose if type(audio_choose) is int
+                           else audio.language == audio_choose)
+                audio.default_track = enabled
+                audio.forced_track = False
+
+        if len(subs_tracks) > 1 and subs_choose is not None:
+            for subs in subs_tracks:
+                enabled = (subs.track_id == subs_choose if type(subs_choose) is int
+                           else subs.language == subs_choose)
+                subs.default_track = enabled
+                # sub.forced_track = enabled
+
+        try:
+            mkv.mux(os.path.join(output_path, os.path.basename(file_path)),
+                    silent=True)
+        except Exception as error:
+            errors.append(os.path.basename(file_path))
+
+    if len(errors) == 0:
+        print("Se procesaron correctamente todos los archivos")
+    else:
+        print("Los siguientes archivos tuvieron errores al procesarse")
+        print("\n".join(errors))
 
 
 def edite_mp4(base_path):
@@ -122,7 +140,8 @@ def edite_mp4(base_path):
     pgb.set_description(os.path.basename(base_path))
     for file_path in pgb:
         mp4 = MP4(file_path)
-        
+
 
 if __name__ == "__main__":
-    pass
+    x = "xcx"
+    x.center(1, )

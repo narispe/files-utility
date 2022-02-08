@@ -1,21 +1,57 @@
+from easygui import fileopenbox, diropenbox
 import os
-import easygui
-from natsort import natsorted
-from tqdm import tqdm
-from pymkv import MKVFile
-from beautifultable import BeautifulTable
 
 
 def handle_input(message, max_option, min_option=0) -> int:
     op = input(message)
-    while not op.isdecimal() or int(op) > max_option or int(op) < min_option:
-        op = input(message)
-    return int(op)
+    try:
+        if not op.isdecimal():
+            raise TypeError("Debes ingresar un número de las opciones disponibles")
+        if int(op) > max_option:
+            raise ValueError("El valor ingresado es mayor al máximo de las opciones disponibles")
+        if int(op) < min_option:
+            raise ValueError("El valor ingresado es menor al máximo de las opciones disponibles")
+    except TypeError as error:
+        print(error)
+        return handle_input(message, max_option, min_option)
+    except ValueError as error:
+        print(error)
+        return handle_input(message, max_option, min_option)
+    else:
+        return int(op)
+
+
+def check_input(message, is_int=False, form=None, content=None,
+                elem_list=None, lenght=None, separator=","):  # TO COMPLETE
+    input_ = input(message)
+    if lenght is not None:
+        if len(input_.split(separator)) == lenght:
+            return input_.split(separator)
+        print("Se han ingresado más elementos" if len(input_.split(separator)) > lenght
+              else "Se han ingresado menos elementos")
+    if is_int:
+        if input_.isdecimal():
+            if elem_list is not None and int(input_) in elem_list:
+                return int(input_)
+            return int(input_)
+        print("No se ha ingresado un dígito")
+    if content is not None:
+        if content in input_:
+            return input_
+        print(f"No se ha incluido {content}")
+    if elem_list is not None:
+        if input_ in elem_list:
+            return input_
+        format_ = ", ".join(elem_list)
+        print(f"Debes ingresar alguna de las siguientes opciones: {format_}")
+    if form is not None:  # Check plantilla
+        return input_
+    return check_input(message, is_int, form, content, elem_list, lenght, separator)
 
 
 def get_paths(dir_path, get_dirs=False, ext=None):
     if dir_path is None:
-        dir_path = easygui.diropenbox(msg="Selecciona la carpeta input")
+        dir_path = diropenbox(msg="Selecciona la carpeta input")
     if not get_dirs:
         if ext is None:
             basenames = list(filter(lambda file: os.path.isfile(os.path.join(dir_path, file)),
@@ -96,45 +132,6 @@ def handle_mp4():
     # mp4["tves"] = ""  # TV Episode
     # mp4["tvsn"] = ""  # TV Season
     pass
-
-
-def get_mkv_info(dir_path=None):
-    if dir_path is None:
-        file_path = easygui.fileopenbox()
-    else:
-        files_paths = get_paths(dir_path, ext=".mkv")
-        if files_paths is None:
-            return None
-        file_path = natsorted(files_paths)[0]
-    mkv = MKVFile(file_path)
-    table = BeautifulTable()
-    table.column_headers = ["ID", "Tipo", "Idioma", "Nombre", "Defecto", "Forzado"]
-    audio_ids, audio_idioms, multip_idiom_audio = list(), list(), False
-    subs_ids, subs_idioms, multip_idiom_subs = list(), list(), False
-    for track in mkv.get_track():
-        table.rows.append([track.track_id, track.track_type, track.language, track.track_name,
-                           track.default_track, track.forced_track])
-        if track.track_type == "audio":
-            audio_ids.append(track.track_id)
-            if track.language not in audio_idioms:
-                audio_idioms.append(track.language)
-            else:
-                multip_idiom_audio = True
-        if track.track_type == "subtitles":
-            subs_ids.append(track.track_id)
-            if track.language not in subs_idioms:
-                subs_idioms.append(track.language)
-            else:
-                multip_idiom_subs = True
-    info = {"table": table,
-            "has_title": mkv.title is not None,
-            "audio_ids": audio_ids,
-            "audio_idioms": audio_idioms,
-            "multip_idiom_audio": multip_idiom_audio,
-            "subs_ids": subs_ids,
-            "subs_idioms": subs_idioms,
-            "multip_idiom_subs": multip_idiom_subs}
-    return info
 
 
 if __name__ == "__main__":
