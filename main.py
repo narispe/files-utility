@@ -42,9 +42,10 @@ def main():
             clear_files_names(dir_path, ext)
 
         elif id_accion == 3:  # Enumerate
-            template = check_input("Plantilla (#=ID): ", content="#")
-            initial_id = check_input("ID inicial: ", is_int=True)
-            extension = check_input("Extensión: ", form=".*")  # TODO
+            template, extension = check_input("Plantilla con extensión"
+                                              " (# = índice): ",
+                                              content="#", is_file=True)
+            initial_id = check_input("Índice inicial: ", is_int=True)
             enumerate_files(dir_path, template, initial_id, extension)
 
         elif id_accion == 4:  # Reemplazar en nombre

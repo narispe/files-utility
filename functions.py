@@ -22,12 +22,12 @@ def handle_input(message, max_option, min_option=0) -> int:
 
 
 def check_input(message, is_int=False, form=None, content=None,
-                elem_list=None, lenght=None, separator=","):  # TO COMPLETE
+                elem_list=None, length=None, separator=",", is_file=False):  # TO COMPLETE
     input_ = input(message)
-    if lenght is not None:
-        if len(input_.split(separator)) == lenght:
+    if length is not None:
+        if len(input_.split(separator)) == length:
             return input_.split(separator)
-        print("Se han ingresado más elementos" if len(input_.split(separator)) > lenght
+        print("Se han ingresado más elementos" if len(input_.split(separator)) > length
               else "Se han ingresado menos elementos")
     if is_int:
         if input_.isdecimal():
@@ -35,7 +35,7 @@ def check_input(message, is_int=False, form=None, content=None,
                 return int(input_)
             return int(input_)
         print("No se ha ingresado un dígito")
-    if content is not None:
+    if content is not None and not is_file:
         if content in input_:
             return input_
         print(f"No se ha incluido {content}")
@@ -46,27 +46,31 @@ def check_input(message, is_int=False, form=None, content=None,
         print(f"Debes ingresar alguna de las siguientes opciones: {format_}")
     if form is not None:  # Check plantilla
         return input_
-    return check_input(message, is_int, form, content, elem_list, lenght, separator)
+    if is_file:
+        if input_.count(".") == 1:
+            input_file, input_ext = input_.split(".")
+            return (input_file, "." + input_ext)
+    return check_input(message, is_int, form, content, elem_list, length, separator)
 
 
-def get_paths(dir_path, get_dirs=False, ext=None):
+def get_paths(dir_path=None, get_dirs=False, ext=None):
     if dir_path is None:
         dir_path = diropenbox(msg="Selecciona la carpeta input")
     if not get_dirs:
         if ext is None:
-            basenames = list(filter(lambda file: os.path.isfile(os.path.join(dir_path, file)),
+            basenames = list(filter(lambda path: os.path.isfile(os.path.join(dir_path, path)),
                                     os.listdir(dir_path)))
-            print(basenames)
         else:
-            basenames = list(filter(lambda file: os.path.isfile(os.path.join(dir_path, file))
-                                    and os.path.splitext(file)[1] == ext,
+            basenames = list(filter(lambda path: os.path.isfile(os.path.join(dir_path, path))
+                                    and os.path.splitext(path)[1] == ext,
                                     os.listdir(dir_path)))
     else:
-        basenames = list(filter(lambda x: os.path.isdir(x),
+        basenames = list(filter(lambda path: os.path.isdir(os.path.join(dir_path, path)),
                                 os.listdir(dir_path)))
     if not basenames:
         return None
-    return [os.path.join(dir_path, basename) for basename in basenames]  # abs paths
+    abs_paths = [os.path.join(dir_path, basename) for basename in basenames]
+    return abs_paths  # abs paths
 
 
 def clear_name(str_in, envir="[]"):
@@ -135,4 +139,4 @@ def handle_mp4():
 
 
 if __name__ == "__main__":
-    pass
+    print(get_paths())

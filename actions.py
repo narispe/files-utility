@@ -8,15 +8,18 @@ from functions import get_paths, clear_name
 
 def raise_files(base_path):
     dirs = get_paths(base_path, get_dirs=True)
+    if dirs is None:
+        print("No existen carpetas dentro de la carpeta seleccionada")
+        return None
     for dir_path in tqdm(dirs):
         files_paths = get_paths(dir_path)
-        pgb = tqdm(files_paths)
-        pgb.set_description(os.path.basename(dir_path))
-        for file_path in pgb:
+        for file_path in files_paths:
             try:
-                os.rename(file_path, os.path.join(base_path, file_path))
+                os.rename(file_path,
+                          os.path.join(base_path, os.path.basename(file_path)))
             except FileExistsError as error:
-                print(f"El archivo {os.path.basename(file_path)} ya existía y no será movido")
+                print(f"El archivo {os.path.basename(file_path)}"
+                      " ya existía y no será movido")
         try:
             os.rmdir(dir_path)
         except Exception as error:
@@ -54,23 +57,28 @@ def rename_files(base_path, searched_sentence, replaced_sentence):
 
 
 def distribute(base_path, labels, categories):
-    destiny_dirs = {label: category for (label, category) in zip(labels, categories)}
+    destiny_dirs = {label: category for (label, category)
+                    in zip(labels, categories)}
     files_paths = get_paths(base_path)
     for file_path in tqdm(files_paths):
         for label in labels:
-            if label in os.path.basename(file_path):
+            if label in os.path.basename(file_path) and not \
+                    any(map(lambda x: x in os.path.basename(file_path),
+                            filter(lambda x: x != label,
+                                   labels))):
                 new_file_path = os.path.join(base_path, destiny_dirs[label],
                                              os.path.basename(file_path))
                 try:
                     os.rename(file_path, new_file_path)
                 except FileNotFoundError:
-                    os.mkdir(destiny_dirs[label])
+                    os.mkdir(os.path.join(base_path, destiny_dirs[label]))
                     os.rename(file_path, new_file_path)
                 break
 
 
 def re_distribute(base_path, labels, categories):
-    destiny_dirs = {label: category for (label, category) in zip(labels, categories)}
+    destiny_dirs = {label: category for (label, category)
+                    in zip(labels, categories)}
     dirs_paths = get_paths(base_path, get_dirs=True)
     pgb = tqdm(dirs_paths)
     for dir_path in pgb:
@@ -89,7 +97,8 @@ def re_distribute(base_path, labels, categories):
                     break
 
 
-def edite_mkv(base_path, output_path, audio_choose, subs_choose, delete_title=False, titles=None):
+def edite_mkv(base_path, output_path, audio_choose, subs_choose,
+              delete_title=False, titles=None):
     files_paths = get_paths(base_path, ext=".mkv")
     pgb = tqdm(natsorted(files_paths))
     errors = list()
@@ -109,17 +118,19 @@ def edite_mkv(base_path, output_path, audio_choose, subs_choose, delete_title=Fa
 
         if len(audio_tracks) > 1 and audio_choose is not None:
             for audio in audio_tracks:
-                enabled = (audio.track_id == audio_choose if type(audio_choose) is int
+                enabled = (audio.track_id == audio_choose
+                           if type(audio_choose) is int
                            else audio.language == audio_choose)
                 audio.default_track = enabled
                 audio.forced_track = False
 
         if len(subs_tracks) > 1 and subs_choose is not None:
             for subs in subs_tracks:
-                enabled = (subs.track_id == subs_choose if type(subs_choose) is int
+                enabled = (subs.track_id == subs_choose
+                           if type(subs_choose) is int
                            else subs.language == subs_choose)
                 subs.default_track = enabled
-                # sub.forced_track = enabled
+                subs.forced_track = subs.forced_track
 
         try:
             mkv.mux(os.path.join(output_path, os.path.basename(file_path)),

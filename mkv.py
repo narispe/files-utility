@@ -19,12 +19,14 @@ def get_mkv_info(path=None):
             file_path = natsorted(files_paths)[0]
     mkv = MKVFile(file_path)
     table = BeautifulTable()
-    table.column_headers = ["ID", "Tipo", "Idioma", "Nombre", "Defecto", "Forzado"]
+    table.column_headers = ["ID", "Tipo", "Idioma", "Nombre",
+                            "Defecto", "Forzado"]
     audio_ids, audio_idioms, multip_audio_idioms = list(), list(), dict()
     subs_ids, subs_idioms, multip_subs_idioms = list(), list(), dict()
     tracks = mkv.get_track()
     for track in tracks:
-        table.rows.append([track.track_id, track.track_type, track.language, track.track_name,
+        table.rows.append([track.track_id, track.track_type,
+                           track.language, track.track_name,
                            track.default_track, track.forced_track])
         if track.track_type == "audio":
             audio_ids.append(track.track_id)
@@ -64,14 +66,14 @@ def track_choose(message, track_type, mkv_info):
     try:
         if choose.isdecimal():
             if int(choose) > max(ids):
-                raise ValueError("El ID ingresado es mayor al máximo de las pistas")
+                raise ValueError("El ID ingresado es mayor al máximo")
             if int(choose) < min(ids):
-                raise ValueError("El ID ingresado es menor al máximo de las pistas")
+                raise ValueError("El ID ingresado es menor al mínimo")
         else:
             if choose not in idioms:
                 raise ValueError("Ninguna pista presenta el idioma ingresado")
             if multip_idioms[choose]:
-                raise ValueError("Existen múltiples pistas con el idioma ingresado")
+                raise ValueError("Existen varias pistas del idioma ingresado")
     except ValueError as error:
         print(error)
         return track_choose(message, track_type, mkv_info)
@@ -93,7 +95,7 @@ def choose_mkv_modify(dir_path=None):
         op_tracks = handle_input("[0] Cancelar\n"
                                  "[1] Cambiar audio y subtítulos\n"
                                  "[2] Cambiar solo audio\n"
-                                 "[3] Cambiar solo subtítulos"
+                                 "[3] Cambiar solo subtítulos\n"
                                  "[4] Omitir\n"
                                  ": ",
                                  4, 0)
@@ -128,20 +130,28 @@ def choose_mkv_modify(dir_path=None):
             delete_title = True
         elif op_titles == 3:  # Añadir
             delete_title = False
-            op_in = handle_input("[1] Ingreso manual\n"
-                                 "[2] Archivo .txt de títulos por episodio\n"
+            op_in = handle_input("[1] Archivo .txt de títulos por episodio\n"
+                                 "[2] Ingreso manual\n"
                                  ": ",
                                  2)
-            if op_in == 1:  # Manual
-                titles_list = check_input("Ingresa los títulos separados por \",\": ",
-                                          length=len(get_paths(dir_path, ext=".mkv")))
-            elif op_in == 2:  # Archivo
-                txt_file_path = fileopenbox("Selecciona el archivo .txt con los títulos",
+            if op_in == 1:  # Archivo
+                txt_file_path = fileopenbox("Selecciona el archivo .txt",
                                             default="*.txt")
                 with open(txt_file_path, "r", encoding="utf-8") as txt_file:
                     lines = txt_file.readlines()
-                    titles_list = [f"{i + 1:02d}: {lines[i].strip()}"
-                                   for i in range(len(lines))]
+                titles_names = list()
+                for line in lines:
+                    line = line.strip()
+                    if not line.startswith("«") or not line.endswith("»"):
+                        line = line.replace("«", "").replace("»", "")
+                        line = "«" + line + "»"
+                    titles_names.append(line)
+                start_index = check_input("Índice inicial: ", is_int=True)
+                titles_list = [f"{i + start_index:02d} - {titles_names[i]}"
+                               for i in range(len(titles_names))]
+            elif op_in == 2:  # Manual
+                titles_list = check_input("Ingresa los títulos separados por \",\": ",
+                                          length=len(get_paths(dir_path, ext=".mkv")))
 
         op_output = handle_input("[0] Cancelar\n"
                                  "[1] Salida por defecto\n"
