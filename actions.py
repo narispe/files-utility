@@ -1,9 +1,13 @@
+from sympy import comp
 from tqdm import tqdm
 from pymkv import MKVFile
 from natsort import natsorted
 from mutagen.mp4 import MP4
 import os
-from functions import get_paths, clear_name
+
+from zmq import TYPE
+from functions import get_paths, clear_name, get_size_format
+from pdf import init_pdf_edit, compress_file
 
 
 def raise_files(base_path):
@@ -153,6 +157,50 @@ def edite_mp4(base_path):
         mp4 = MP4(file_path)
 
 
+def edite_pdf(base_path, output_path, option, rewrite=False):
+    if option == "compress":
+        files_paths = get_paths(base_path, ext=".pdf")
+    elif option == "recursive_compress":
+        files_paths = get_paths(base_path, ext=".pdf")
+        try:
+            dirs_paths = get_paths(base_path, get_dirs=True)
+            for dir_path in dirs_paths:
+                try:
+                    files_paths.extend(get_paths(dir_path, ext=".pdf"))
+                    # dir_subpaths = get_paths(dir_path, get_dirs=True)
+                except TypeError:
+                    continue
+        except TypeError:
+            pass
+
+    output_dir = (output_path if output_path is not None
+                  else os.path.join(base_path, "Compress"))
+    if not os.path.exists(output_dir) and not rewrite:
+        os.mkdir(output_dir)
+    dir_initial_size = 0
+    dir_compressed_size = 0
+    pgb = tqdm(natsorted(files_paths))
+    init_pdf_edit()
+    for file_path in pgb:
+        file_name = os.path.basename(file_path)
+        pgb.set_description(file_name)
+        try:
+            if not rewrite:
+                output_file_path = os.path.join(output_dir, file_name)
+            else:
+                output_file_path = None
+            initial_size, compressed_size = compress_file(file_path,
+                                                          output_file_path)
+        except TypeError:
+            continue
+        else:
+            dir_initial_size += initial_size
+            dir_compressed_size += compressed_size
+    ratio = (dir_compressed_size - dir_initial_size) / dir_initial_size
+    print(f"Tamaño inicial: {get_size_format(dir_initial_size)}")
+    print(f"Tamaño final: {get_size_format(dir_compressed_size)}")
+    print(f"Razón de reducción: {ratio:.2%}%")
+
+
 if __name__ == "__main__":
-    x = "xcx"
-    x.center(1, )
+    pass

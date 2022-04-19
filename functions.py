@@ -138,5 +138,13 @@ def handle_mp4():
     pass
 
 
+def get_size_format(b, factor=1024, suffix="B"):
+    for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
+        if b < factor:
+            return f"{b:.2f}{unit}{suffix}"
+        b /= factor
+    return f"{b:.2f}Y{suffix}"
+
+
 if __name__ == "__main__":
     print(get_paths())
