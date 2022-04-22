@@ -1,4 +1,5 @@
 import easygui
+import subprocess
 from sympy import comp
 from tqdm import tqdm
 from pymkv import MKVFile
@@ -104,45 +105,52 @@ def re_distribute(base_path, labels, categories):
 
 
 def edite_mkv(base_path, output_path, audio_choose, subs_choose,
-              delete_title=False, titles=None):
+              delete_title, titles):
     files_paths = get_paths(base_path, ext=".mkv")
     pgb = tqdm(natsorted(files_paths))
     errors = list()
     for file_path in pgb:
         # pgb.set_description(os.path.basename(file_path))
-        mkv = MKVFile(file_path)
-        tracks = mkv.get_track()
-        audio_tracks = list(filter(lambda x: x.track_type == "audio",
-                                   tracks))
-        subs_tracks = list(filter(lambda x: x.track_type == "subtitles",
-                                  tracks))
-        if delete_title:
-            mkv.title = ""
-        elif titles is not None:
-            mkv.title = titles[files_paths.index(file_path)]
-        if len(audio_tracks) > 1 and audio_choose is not None:
-            for audio in audio_tracks:
-                enabled = (audio.track_id == audio_choose
-                           if type(audio_choose) is int
-                           else audio.language == audio_choose)
-                audio.default_track = enabled
-                audio.forced_track = False
-        if len(subs_tracks) > 1 and subs_choose is not None:
-            for subs in subs_tracks:
-                enabled = (subs.track_id == subs_choose
-                           if type(subs_choose) is int
-                           else subs.language == subs_choose)
-                subs.default_track = enabled
-                subs.forced_track = subs.forced_track
-
-        try:
-            if output_path is not None:
-                mkv.mux(os.path.join(output_path, os.path.basename(file_path)),
-                        silent=True)
-            else:
-                mkv.mux(file_path, silent=True)
-        except Exception as error:
-            errors.append(f"{os.path.basename(file_path)}:  {error}")
+        if audio_choose is None and subs_choose is None \
+                and titles is not None:
+            title = titles[files_paths.index(file_path)]
+            try:
+                subprocess.run(["mkvpropedit", file_path, "-e", "info", "-s", f"title=\"{title}\""])
+            except Exception as error:
+                errors.append(file_path)
+        else:
+            mkv = MKVFile(file_path)
+            tracks = mkv.get_track()
+            audio_tracks = list(filter(lambda x: x.track_type == "audio",
+                                       tracks))
+            subs_tracks = list(filter(lambda x: x.track_type == "subtitles",
+                                      tracks))
+            if delete_title:
+                mkv.title = ""
+            elif titles is not None:
+                mkv.title = titles[files_paths.index(file_path)]
+            if len(audio_tracks) > 1 and audio_choose is not None:
+                for audio in audio_tracks:
+                    enabled = (audio.track_id == audio_choose
+                               if type(audio_choose) is int
+                               else audio.language == audio_choose)
+                    audio.default_track = enabled
+                    audio.forced_track = False
+            if len(subs_tracks) > 1 and subs_choose is not None:
+                for subs in subs_tracks:
+                    enabled = (subs.track_id == subs_choose
+                               if type(subs_choose) is int
+                               else subs.language == subs_choose)
+                    subs.default_track = enabled
+                    subs.forced_track = subs.forced_track
+            try:
+                if output_path is not None:
+                    mkv.mux(os.path.join(output_path, os.path.basename(file_path)),
+                            silent=True)
+                else:
+                    mkv.mux(file_path, silent=True)
+            except Exception as error:
+                errors.append(f"{os.path.basename(file_path)}:  {error}")
 
     if len(errors) == 0:
         print("Se procesaron correctamente todos los archivos")

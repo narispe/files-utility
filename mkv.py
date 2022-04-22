@@ -89,8 +89,6 @@ def choose_mkv_modify(dir_path=None):
         print("No existen mkv en la carpeta")
         return None
     else:
-        audio_choose = None
-        subs_choose = None
         print(mkv_info["table"])
         op_tracks = handle_input("[0] Cancelar\n"
                                  "[1] Cambiar audio y subtítulos\n"
@@ -99,6 +97,8 @@ def choose_mkv_modify(dir_path=None):
                                  "[4] Omitir\n"
                                  ": ",
                                  4, 0)
+        audio_choose = None
+        subs_choose = None
         if op_tracks == 0:  # Omitir
             return None
         elif op_tracks == 1:  # Audio y Subs
