@@ -130,41 +130,21 @@ def choose_mkv_modify(dir_path=None):
             delete_title = True
         elif op_titles == 3:  # Añadir
             delete_title = False
-            op_in = handle_input("[1] Archivo .txt de títulos por episodio\n"
-                                 "[2] Ingreso manual\n"
-                                 ": ",
-                                 2)
-            if op_in == 1:  # Archivo
-                txt_file_path = fileopenbox("Selecciona el archivo .txt",
-                                            default="*.txt")
-                with open(txt_file_path, "r", encoding="utf-8") as txt_file:
-                    lines = txt_file.readlines()
-                titles_names = list()
-                for line in lines:
-                    line = line.strip()
-                    if not line.startswith("«") or not line.endswith("»"):
-                        line = line.replace("«", "").replace("»", "")
-                        line = "«" + line + "»"
-                    titles_names.append(line)
-                start_index = check_input("Índice inicial: ", is_int=True)
-                titles_list = [f"{i + start_index:02d} - {titles_names[i]}"
-                               for i in range(len(titles_names))]
-            elif op_in == 2:  # Manual
-                titles_list = check_input("Ingresa los títulos separados por \",\": ",
-                                          length=len(get_paths(dir_path, ext=".mkv")))
-
+            titles_list = load_file(dir_path)
         op_output = handle_input("[0] Cancelar\n"
-                                 "[1] Salida por defecto\n"
-                                 "[2] Seleccionar salida\n"
-                                 ": ",
-                                 2, 0)
+                                 "[1] Sobreescribir\n"
+                                 "[2] Salida por defecto\n"
+                                 "[3] Seleccionar salida\n"
+                                 ": ", 3)
         if op_output == 0:
             return None
-        elif op_output == 1:  # Defecto
+        elif op_output == 1:  # Sobreescribir
+            output_dir = None
+        elif op_output == 2:  # Defecto
             output_dir = os.path.join(dir_path, "Output")
             if not os.path.exists(output_dir):
                 os.mkdir(output_dir)
-        elif op_output == 2:  # Elegir
+        elif op_output == 3:  # Elegir
             output_dir = diropenbox("Seleciona carpeta para la salida")
 
         return {"audio": audio_choose,
@@ -172,3 +152,27 @@ def choose_mkv_modify(dir_path=None):
                 "delete_title": delete_title,
                 "titles": titles_list,
                 "output_dir": output_dir}
+
+
+def load_file(dir_path):
+    txt_file_path = fileopenbox("Selecciona el archivo .txt",
+                                default=dir_path + "/*.txt")
+    with open(txt_file_path, "r", encoding="utf-8") as txt_file:
+        lines = txt_file.readlines()
+    titles_names = list()
+    for line in lines:
+        line = line.strip()
+        if not line.startswith("«") or not line.endswith("»"):
+            line = line.replace("«", "").replace("»", "")
+            line = "«" + line + "»"
+        titles_names.append(line)
+    op_id = handle_input("[1] Incluir índice\n"
+                         "[2] Sin índice\n"
+                         ": ", 2)
+    if op_id == 1:
+        start_index = check_input("Índice inicial: ", is_int=True)
+        titles_list = [f"{i + start_index:02d}: {titles_names[i]}"
+                       for i in range(len(titles_names))]
+    elif op_id == 2:
+        titles_list = titles_names
+    return titles_list

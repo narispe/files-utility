@@ -27,7 +27,8 @@ def check_input(message, is_int=False, form=None, content=None,
     if length is not None:
         if len(input_.split(separator)) == length:
             return input_.split(separator)
-        print("Se han ingresado más elementos" if len(input_.split(separator)) > length
+        print("Se han ingresado más elementos"
+              if len(input_.split(separator)) > length
               else "Se han ingresado menos elementos")
     if is_int:
         if input_.isdecimal():

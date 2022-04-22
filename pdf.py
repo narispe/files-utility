@@ -1,5 +1,6 @@
 import os
 from PDFNetPython3.PDFNetPython import PDFDoc, Optimizer, SDFDoc, PDFNet
+import easygui
 
 
 def init_pdf_edit():

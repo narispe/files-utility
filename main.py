@@ -1,12 +1,13 @@
 
-from easygui import diropenbox
+from easygui import diropenbox, filesavebox
 import os
 import webbrowser
 from functions import handle_input, check_input, get_paths
 from mkv import choose_mkv_modify
 from actions import (raise_files, clear_files_names, enumerate_files,
                      rename_files, distribute, re_distribute,
-                     edite_mkv, edite_mp4, edite_pdf)
+                     edite_mkv, edite_mp4, edite_pdf,
+                     search_files)
 
 
 def main():
@@ -24,9 +25,10 @@ def main():
                                  "[7] Editar MKV\n"
                                  "[8] Editar MP4\n"
                                  "[9] Editar PDF\n"
-                                 "[10] Salir\n"
+                                 "[10] Buscar archivos\n"
+                                 "[11] Salir\n"
                                  ": ",
-                                 10)
+                                 11)
 
         if id_action == 0:  # Cambiar carpeta
             new_dir_path = diropenbox()
@@ -67,7 +69,7 @@ def main():
 
         elif id_action == 7:  # Editar MKV
             choose = choose_mkv_modify(dir_path)
-            if choose is not None and choose["output_dir"] is not None:
+            if choose is not None:
                 edite_mkv(dir_path, choose["output_dir"],
                           choose["audio"], choose["subs"],
                           choose["delete_title"], choose["titles"])
@@ -88,7 +90,14 @@ def main():
             elif id_option == 2:
                 edite_pdf(dir_path, output_dir, "recursive_compress", rewrite=True)
 
-        elif id_action == 10:  # Salir
+        elif id_action == 10:  # Buscar archivos
+            ext = check_input("Extensión: ", form=".*")
+            output_file = filesavebox(default=dir_path + "/")
+            if not output_file.endswith(".txt"):
+                output_file = output_file + ".txt"
+            search_files(dir_path, ext, output_file)
+
+        elif id_action == 11:  # Salir
             break
 
 
