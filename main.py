@@ -11,10 +11,11 @@ from actions import (raise_files, clear_files_names, enumerate_files,
 
 
 def main():
+    print("Seleccionando carpeta...")
     dir_path = diropenbox()
     while dir_path is not None:
         title = os.path.basename(dir_path).center(30, "_")
-        id_action = handle_input(f"{title}\n"
+        id_action = handle_input(f"\n{title}\n"
                                  "[0] Cambiar carpeta\n"
                                  "[1] Subir\n"
                                  "[2] Limpiar nombres\n"
@@ -35,13 +36,17 @@ def main():
             dir_path = new_dir_path if new_dir_path is not None else dir_path
 
         elif id_action == 1:  # Subir
-            raise_files(dir_path)
+            id_remove = handle_input("[0] Cancelar\n"
+                                     "[1] Eliminar duplicados\n"
+                                     "[2] No mover duplicados\n"
+                                     ": ", 2)
+            if id_remove == 0:
+                continue
+            remove_duplicates = True if id_remove == 1 else False
+            raise_files(dir_path, remove_duplicates)
 
         elif id_action == 2:  # Limpiar nombres
             ext = check_input("Extensión: ", form=".*")  # TODO
-            if get_paths(dir_path, ext=ext) is None:
-                print(f"No existen archivo de extension {ext}")
-                continue
             clear_files_names(dir_path, ext)
 
         elif id_action == 3:  # Enumerate
@@ -59,36 +64,22 @@ def main():
         elif id_action == 5:  # Distribuir
             # TODO: check len
             labels = input("Etiquetas separados por \",\": ").split(",")
-            categories = input("Categorías respectivas separadas por \",\": ").split(",")
-            distribute(dir_path, labels, categories)
+            categories = input("Categorías respectivas separadas por \",\": ")
+            distribute(dir_path, labels, categories.split(","))
 
         elif id_action == 6:  # Redistribuir
             labels = input("Etiquetas separados por \",\": ").split(",")
-            categories = input("Categorías respectivas separadas por \",\": ").split(",")
-            re_distribute(dir_path, labels, categories)
+            categories = input("Categorías respectivas separadas por \",\": ")
+            re_distribute(dir_path, labels, categories.split(","))
 
         elif id_action == 7:  # Editar MKV
-            choose = choose_mkv_modify(dir_path)
-            if choose is not None:
-                edite_mkv(dir_path, choose["output_dir"],
-                          choose["audio"], choose["subs"],
-                          choose["delete_title"], choose["titles"])
+            edite_mkv(dir_path)
 
         elif id_action == 8:  # Editar MP4
             edite_mp4()
 
         elif id_action == 9:  # Editar PDF
-            id_option = handle_input("[0] Cancelar\n"
-                                     "[1] Comprimir\n"
-                                     "[2] Comprimir recursivo\n"
-                                     ": ",
-                                     2)
-            # output_dir = diropenbox()
-            output_dir = None
-            if id_option == 1:
-                edite_pdf(dir_path, output_dir, "compress", rewrite=True)
-            elif id_option == 2:
-                edite_pdf(dir_path, output_dir, "recursive_compress", rewrite=True)
+            edite_pdf(dir_path)
 
         elif id_action == 10:  # Buscar archivos
             ext = check_input("Extensión: ", form=".*")

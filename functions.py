@@ -1,5 +1,6 @@
 from easygui import fileopenbox, diropenbox
 import os
+from os import path
 
 
 def handle_input(message, max_option, min_option=0) -> int:
@@ -54,24 +55,48 @@ def check_input(message, is_int=False, form=None, content=None,
     return check_input(message, is_int, form, content, elem_list, length, separator)
 
 
-def get_paths(dir_path=None, get_dirs=False, ext=None):
+def get_paths(dir_path=None, recursive=False, get_dirs=False, ext=None):
     if dir_path is None:
         dir_path = diropenbox(msg="Selecciona la carpeta input")
+    if not recursive:
+        paths = get_local_paths(dir_path, get_dirs, ext)
+    else:
+        paths = get_recursive_paths(dir_path, get_dirs, ext)
+    if paths == []:
+        if ext is not None:
+            print(f"No se encontraron archivos de extensión {ext}")
+        elif get_dirs:
+            print("No se encontraron directorios")
+        return None
+    return paths
+
+
+def get_local_paths(dir_path, get_dirs, ext):
     if not get_dirs:
         if ext is None:
-            basenames = list(filter(lambda path: os.path.isfile(os.path.join(dir_path, path)),
-                                    os.listdir(dir_path)))
+            paths = filter(lambda path: path.isfile(path.join(dir_path, path)),
+                           os.listdir(dir_path))
         else:
-            basenames = list(filter(lambda path: os.path.isfile(os.path.join(dir_path, path))
-                                    and os.path.splitext(path)[1] == ext,
-                                    os.listdir(dir_path)))
+            paths = filter(lambda path: path.isfile(path.join(dir_path, path))
+                           and path.splitext(path)[1] == ext,
+                           os.listdir(dir_path))
     else:
-        basenames = list(filter(lambda path: os.path.isdir(os.path.join(dir_path, path)),
-                                os.listdir(dir_path)))
-    if not basenames:
-        return None
-    abs_paths = [os.path.join(dir_path, basename) for basename in basenames]
-    return abs_paths  # abs paths
+        paths = filter(lambda path: path.isdir(path.join(dir_path, path)),
+                       os.listdir(dir_path))
+    return [path.join(dir_path, path) for path in paths]
+
+
+def get_recursive_paths(dir_path, get_dirs, ext):
+    paths = list()
+    for root, dirs, files in os.walk(dir_path):
+        if not get_dirs:
+            if ext is not None:
+                files = filter(lambda file: path.splitext(file)[1] == ext,
+                               files)
+            paths.extend([path.join(root, file) for file in files])
+        else:
+            paths.extend([path.join(root, dir_) for dir_ in dirs])
+    return paths
 
 
 def clear_name(str_in, envir="[]"):
@@ -145,6 +170,30 @@ def get_size_format(b, factor=1024, suffix="B"):
             return f"{b:.2f}{unit}{suffix}"
         b /= factor
     return f"{b:.2f}Y{suffix}"
+
+
+def load_titles_file(dir_path):
+    txt_file_path = fileopenbox("Selecciona el archivo .txt",
+                                default=dir_path + "/*.txt")
+    with open(txt_file_path, "r", encoding="utf-8") as txt_file:
+        lines = txt_file.readlines()
+    titles_names = list()
+    for line in lines:
+        line = line.strip()
+        if not line.startswith("«") or not line.endswith("»"):
+            line = line.replace("«", "").replace("»", "")
+            line = "«" + line + "»"
+        titles_names.append(line)
+    op_id = handle_input("[1] Incluir índice\n"
+                         "[2] Sin índice\n"
+                         ": ", 2)
+    if op_id == 1:
+        start_index = check_input("Índice inicial: ", is_int=True)
+        titles_list = [f"{i + start_index:02d}: {titles_names[i]}"
+                       for i in range(len(titles_names))]
+    elif op_id == 2:
+        titles_list = titles_names
+    return titles_list
 
 
 if __name__ == "__main__":

@@ -1,22 +1,15 @@
-from pymkv import MKVFile
-from easygui import fileopenbox, diropenbox
-from beautifultable import BeautifulTable
+import subprocess
 import os
-from functions import get_paths, handle_input, check_input
+from os import path
 from natsort import natsorted
+from beautifultable import BeautifulTable
+from easygui import diropenbox
+from pymkv import MKVFile
+from functions import handle_input, load_titles_file
 
 
-def get_mkv_info(path=None):
-    if path is None:
-        file_path = fileopenbox()
-    else:
-        if os.path.isfile(path):
-            file_path = path
-        elif os.path.isdir(path):
-            files_paths = get_paths(path, ext=".mkv")
-            if files_paths is None:
-                return None
-            file_path = natsorted(files_paths)[0]
+def get_mkv_info(files_paths, index=0):
+    file_path = natsorted(files_paths)[index]
     mkv = MKVFile(file_path)
     table = BeautifulTable()
     table.column_headers = ["ID", "Tipo", "Idioma", "Nombre",
@@ -83,54 +76,40 @@ def track_choose(message, track_type, mkv_info):
         return choose
 
 
-def choose_mkv_modify(dir_path=None):
-    mkv_info = get_mkv_info(dir_path)
-    if mkv_info is None:
-        print("No existen mkv en la carpeta")
+def choose_mkv_modify(files_paths, dir_path):
+    mkv_info = get_mkv_info(files_paths)
+    print(mkv_info["table"])
+    op_tracks = handle_input("[0] Cancelar\n"
+                             "[1] Cambiar audio y subtítulos\n"
+                             "[2] Cambiar solo audio\n"
+                             "[3] Cambiar solo subtítulos\n"
+                             "[4] Omitir\n"
+                             ": ", 4, 0)
+    audio_choose, subs_choose = None, None
+    if op_tracks == 0:  # Omitir
         return None
-    else:
-        print(mkv_info["table"])
-        op_tracks = handle_input("[0] Cancelar\n"
-                                 "[1] Cambiar audio y subtítulos\n"
-                                 "[2] Cambiar solo audio\n"
-                                 "[3] Cambiar solo subtítulos\n"
-                                 "[4] Omitir\n"
-                                 ": ",
-                                 4, 0)
-        audio_choose = None
-        subs_choose = None
-        if op_tracks == 0:  # Omitir
-            return None
-        elif op_tracks == 1:  # Audio y Subs
-            audio_choose = track_choose("Selecciona el audio: ",
-                                        "audio", mkv_info)
-            subs_choose = track_choose("Selecciona los subtítulos: ",
-                                       "subtitles", mkv_info)
-        elif op_tracks == 2:  # Audio
-            audio_choose = track_choose("Selecciona el audio: ",
-                                        "audio", mkv_info)
-        elif op_tracks == 3:  # Subs
-            subs_choose = track_choose("Selecciona los subtítulos: ",
-                                       "subtitles", mkv_info)
-        elif op_tracks == 4:  # Omitir
-            pass
+    if 0 < op_tracks < 3:
+        audio_choose = track_choose("Selecciona el audio: ",
+                                    "audio", mkv_info)
+    if op_tracks == 1 or op_tracks == 3:
+        subs_choose = track_choose("Selecciona los subtítulos: ",
+                                   "subtitles", mkv_info)
 
-        op_titles = handle_input("[0] Cancelar\n"
-                                 "[1] Conservar títulos\n"
-                                 "[2] Borrar títulos\n"
-                                 "[3] Añadir títulos\n"
-                                 ": ",
-                                 3, 0)
-        titles_list = None
-        if op_titles == 0:
-            return None
-        elif op_titles == 1:  # Conservar
-            delete_title = False
-        elif op_titles == 2:  # Borrar
-            delete_title = True
-        elif op_titles == 3:  # Añadir
-            delete_title = False
-            titles_list = load_file(dir_path)
+    op_titles = handle_input("[0] Cancelar\n"
+                             "[1] Conservar títulos\n"
+                             "[2] Borrar títulos\n"
+                             "[3] Añadir títulos\n"
+                             ": ", 3, 0)
+    titles_list, delete_title = None, False
+    if op_titles == 0:
+        return None
+    elif op_titles == 2:  # Borrar
+        delete_title = True
+    elif op_titles == 3:  # Añadir
+        titles_list = load_titles_file(dir_path)
+
+    output_dir = None
+    if audio_choose is not None and subs_choose is not None:
         op_output = handle_input("[0] Cancelar\n"
                                  "[1] Sobreescribir\n"
                                  "[2] Salida por defecto\n"
@@ -138,41 +117,47 @@ def choose_mkv_modify(dir_path=None):
                                  ": ", 3)
         if op_output == 0:
             return None
-        elif op_output == 1:  # Sobreescribir
-            output_dir = None
         elif op_output == 2:  # Defecto
-            output_dir = os.path.join(dir_path, "Output")
-            if not os.path.exists(output_dir):
+            output_dir = path.join(dir_path, "Output")
+            if not path.exists(output_dir):
                 os.mkdir(output_dir)
         elif op_output == 3:  # Elegir
-            output_dir = diropenbox("Seleciona carpeta para la salida")
+            output_dir = diropenbox(msg="Seleciona carpeta para la salida",
+                                    default=dir_path + "/")
+    return {"audio": audio_choose,
+            "subs": subs_choose,
+            "delete_title": delete_title,
+            "titles": titles_list,
+            "output_dir": output_dir}
 
-        return {"audio": audio_choose,
-                "subs": subs_choose,
-                "delete_title": delete_title,
-                "titles": titles_list,
-                "output_dir": output_dir}
 
-
-def load_file(dir_path):
-    txt_file_path = fileopenbox("Selecciona el archivo .txt",
-                                default=dir_path + "/*.txt")
-    with open(txt_file_path, "r", encoding="utf-8") as txt_file:
-        lines = txt_file.readlines()
-    titles_names = list()
-    for line in lines:
-        line = line.strip()
-        if not line.startswith("«") or not line.endswith("»"):
-            line = line.replace("«", "").replace("»", "")
-            line = "«" + line + "»"
-        titles_names.append(line)
-    op_id = handle_input("[1] Incluir índice\n"
-                         "[2] Sin índice\n"
-                         ": ", 2)
-    if op_id == 1:
-        start_index = check_input("Índice inicial: ", is_int=True)
-        titles_list = [f"{i + start_index:02d}: {titles_names[i]}"
-                       for i in range(len(titles_names))]
-    elif op_id == 2:
-        titles_list = titles_names
-    return titles_list
+def process_mkv(file_path, audio_choose, subs_choose, title, output_dir):
+    if title is not None and audio_choose is None and subs_choose is None:
+        subprocess.run(["mkvpropedit", file_path, "-e",
+                        "info", "-s", f"title={title}"],
+                       capture_output=True)
+    else:
+        mkv = MKVFile(file_path)
+        if title is not None:
+            mkv.title = title
+        tracks = mkv.get_track()
+        audio_tracks = list(filter(lambda x: x.track_type == "audio",
+                                   tracks))
+        subs_tracks = list(filter(lambda x: x.track_type == "subtitles",
+                                  tracks))
+        if audio_choose is not None:
+            for audio in audio_tracks:
+                enabled = (audio.track_id == audio_choose
+                           if type(audio_choose) is int
+                           else audio.language == audio_choose)
+                audio.default_track = enabled
+                audio.forced_track = False
+        if subs_choose is not None:
+            for subs in subs_tracks:
+                enabled = (subs.track_id == subs_choose
+                           if type(subs_choose) is int
+                           else subs.language == subs_choose)
+                subs.default_track = enabled
+                subs.forced_track = subs.forced_track
+        mkv.mux(path.join(output_dir, path.basename(file_path)),
+                silent=True)

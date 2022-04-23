@@ -1,15 +1,44 @@
 import os
+from os import path
 from PDFNetPython3.PDFNetPython import PDFDoc, Optimizer, SDFDoc, PDFNet
-import easygui
+from functions import handle_input
+from easygui import diropenbox
 
 
 def init_pdf_edit():
     PDFNet.Initialize()
 
 
+def choose_pdf_modify(dir_path):
+    op = handle_input("[0] Cancelar\n"
+                      "[1] Comprimir\n"
+                      "[2] Comprimir recursivo\n"
+                      ": ", 2)
+    if op == 0:
+        return None
+    elif op == 1:
+        action = "compress"
+    elif op == 2:
+        action = "recursive_compress"
+    op_output = handle_input("[0] Cancelar\n"
+                             "[1] Sobreescribir\n"
+                             "[2] Salida por defecto\n"
+                             "[3] Seleccionar salida\n"
+                             ": ", 3)
+    if op_output == 0:
+        return None
+    elif op == 1:
+        output_dir = None
+    elif op == 2:
+        output_dir = path.join(dir_path, "Output")
+        if not path.exists(output_dir):
+            os.mkdir(output_dir)
+    elif op == 3:
+        output_dir = diropenbox(default=dir_path+"/")
+    return {"action": action, "output_dir": output_dir}
+
+
 def compress_file(input_file, output_file):
-    if not output_file:
-        output_file = input_file
     initial_size = os.path.getsize(input_file)
     try:
         doc = PDFDoc(input_file)
@@ -22,8 +51,8 @@ def compress_file(input_file, output_file):
         print("Error al comprimir=", e)
         try:
             doc.Close()
-        except:
-            pass
+        except Exception as error:
+            print("***", error)
         return False
     compressed_size = os.path.getsize(output_file)
     return (initial_size, compressed_size)
