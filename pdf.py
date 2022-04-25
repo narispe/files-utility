@@ -10,15 +10,15 @@ def init_pdf_edit():
 
 
 def choose_pdf_modify(dir_path):
-    op = handle_input("[0] Cancelar\n"
-                      "[1] Comprimir\n"
-                      "[2] Comprimir recursivo\n"
-                      ": ", 2)
-    if op == 0:
+    op_action = handle_input("[0] Cancelar\n"
+                             "[1] Comprimir\n"
+                             "[2] Comprimir recursivo\n"
+                             ": ", 2)
+    if op_action == 0:
         return None
-    elif op == 1:
+    elif op_action == 1:
         action = "compress"
-    elif op == 2:
+    elif op_action == 2:
         action = "recursive_compress"
     op_output = handle_input("[0] Cancelar\n"
                              "[1] Sobreescribir\n"
@@ -27,14 +27,14 @@ def choose_pdf_modify(dir_path):
                              ": ", 3)
     if op_output == 0:
         return None
-    elif op == 1:
+    elif op_output == 1:
         output_dir = None
-    elif op == 2:
+    elif op_output == 2:
         output_dir = path.join(dir_path, "Output")
         if not path.exists(output_dir):
             os.mkdir(output_dir)
-    elif op == 3:
-        output_dir = diropenbox(default=dir_path+"/")
+    elif op_output == 3:
+        output_dir = diropenbox(default=dir_path)
     return {"action": action, "output_dir": output_dir}
 
 
@@ -48,11 +48,11 @@ def compress_file(input_file, output_file):
         doc.Save(output_file, SDFDoc.e_linearized)
         doc.Close()
     except Exception as e:
-        print("Error al comprimir=", e)
+        print("Error al comprimir=", type(e))
         try:
             doc.Close()
         except Exception as error:
-            print("***", error)
+            print("***", type(error))
         return False
     compressed_size = os.path.getsize(output_file)
     return (initial_size, compressed_size)

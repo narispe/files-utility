@@ -1,4 +1,4 @@
-from easygui import fileopenbox, diropenbox
+from easygui import fileopenbox, diropenbox, passwordbox
 import os
 from os import path
 
@@ -7,11 +7,14 @@ def handle_input(message, max_option, min_option=0) -> int:
     op = input(message)
     try:
         if not op.isdecimal():
-            raise TypeError("Debes ingresar un número de las opciones disponibles")
+            raise TypeError("Debes ingresar un número"
+                            " de las opciones disponibles")
         if int(op) > max_option:
-            raise ValueError("El valor ingresado es mayor al máximo de las opciones disponibles")
+            raise ValueError("El valor ingresado es mayor"
+                             " al máximo de las opciones disponibles")
         if int(op) < min_option:
-            raise ValueError("El valor ingresado es menor al máximo de las opciones disponibles")
+            raise ValueError("El valor ingresado es menor"
+                             " al máximo de las opciones disponibles")
     except TypeError as error:
         print(error)
         return handle_input(message, max_option, min_option)
@@ -23,36 +26,45 @@ def handle_input(message, max_option, min_option=0) -> int:
 
 
 def check_input(message, is_int=False, form=None, content=None,
-                elem_list=None, length=None, separator=",", is_file=False):  # TO COMPLETE
+                elem_list=None, length=None, separator=",", is_file=False):
     input_ = input(message)
-    if length is not None:
-        if len(input_.split(separator)) == length:
-            return input_.split(separator)
-        print("Se han ingresado más elementos"
-              if len(input_.split(separator)) > length
-              else "Se han ingresado menos elementos")
+    valid_input = True
     if is_int:
-        if input_.isdecimal():
-            if elem_list is not None and int(input_) in elem_list:
-                return int(input_)
-            return int(input_)
-        print("No se ha ingresado un dígito")
-    if content is not None and not is_file:
-        if content in input_:
-            return input_
-        print(f"No se ha incluido {content}")
-    if elem_list is not None:
-        if input_ in elem_list:
-            return input_
-        format_ = ", ".join(elem_list)
-        print(f"Debes ingresar alguna de las siguientes opciones: {format_}")
-    if form is not None:  # Check plantilla
+        if elem_list is None and not input_.isdecimal():
+            valid_input = False
+            print("No se ha ingresado un dígito")
+    if form is not None:  # TODO
         return input_
+    if content is not None:
+        if content not in input_:
+            valid_input = False
+            print(f"No se ha incluido {content}")
+    if elem_list is not None:
+        if is_int and int(input_) not in elem_list:
+            valid_input = False
+        elif input_ not in elem_list:
+            valid_input = False
+        print(f"Debes ingresar alguna de las siguientes opciones: {elem_list}")
+    if length is not None:
+        if len(input_.split(separator)) > length:
+            valid_input = False
+            print("Se han ingresado más elementos")
+        if len(input_.split(separator)) < length:
+            valid_input = False
+            print("Se han ingresado menos elementos")
     if is_file:
-        if input_.count(".") == 1:
-            input_file, input_ext = input_.split(".")
-            return (input_file, "." + input_ext)
-    return check_input(message, is_int, form, content, elem_list, length, separator)
+        if input_.count(".") < 1:
+            valid_input = False
+            print("No se ha ingresado un nombre de archivo válido")
+    if valid_input:
+        if is_int:
+            return int(input_)
+        elif length is not None:
+            return input_.split(separator)
+        elif is_file:
+            return path.splitext(input_)
+    return check_input(message, is_int, form, content,
+                       elem_list, length, separator)
 
 
 def get_paths(dir_path=None, recursive=False, get_dirs=False, ext=None):
@@ -74,16 +86,19 @@ def get_paths(dir_path=None, recursive=False, get_dirs=False, ext=None):
 def get_local_paths(dir_path, get_dirs, ext):
     if not get_dirs:
         if ext is None:
-            paths = filter(lambda path: path.isfile(path.join(dir_path, path)),
+            paths = filter(lambda file_path:
+                           path.isfile(path.join(dir_path, file_path)),
                            os.listdir(dir_path))
         else:
-            paths = filter(lambda path: path.isfile(path.join(dir_path, path))
-                           and path.splitext(path)[1] == ext,
+            paths = filter(lambda file_path:
+                           path.isfile(path.join(dir_path, file_path))
+                           and path.splitext(file_path)[1] == ext,
                            os.listdir(dir_path))
     else:
-        paths = filter(lambda path: path.isdir(path.join(dir_path, path)),
+        paths = filter(lambda subdir_path:
+                       path.isdir(path.join(dir_path, subdir_path)),
                        os.listdir(dir_path))
-    return [path.join(dir_path, path) for path in paths]
+    return [path.join(dir_path, path_) for path_ in paths]
 
 
 def get_recursive_paths(dir_path, get_dirs, ext):

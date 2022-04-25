@@ -139,7 +139,7 @@ def edite_mp4(base_path):
 
 
 def edite_pdf(base_path):
-    choose = choose_pdf_modify()
+    choose = choose_pdf_modify(base_path)
     if choose is None:
         return None
     if choose["action"] == "compress":
