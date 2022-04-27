@@ -1,4 +1,4 @@
-from easygui import fileopenbox, diropenbox, passwordbox
+from easygui import fileopenbox, diropenbox
 import os
 from os import path
 

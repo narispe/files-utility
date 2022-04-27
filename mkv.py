@@ -12,7 +12,7 @@ def get_mkv_info(files_paths, index=0):
     file_path = natsorted(files_paths)[index]
     mkv = MKVFile(file_path)
     table = BeautifulTable()
-    table.column_headers = ["ID", "Tipo", "Idioma", "Nombre",
+    table.columns.header = ["ID", "Tipo", "Idioma", "Nombre",
                             "Defecto", "Forzado"]
     audio_ids, audio_idioms, multip_audio_idioms = list(), list(), dict()
     subs_ids, subs_idioms, multip_subs_idioms = list(), list(), dict()

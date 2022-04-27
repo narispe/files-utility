@@ -1,7 +1,6 @@
 
 from easygui import diropenbox, filesavebox
 import os
-import webbrowser
 from functions import handle_input, check_input, get_paths
 from mkv import choose_mkv_modify
 from actions import (raise_files, clear_files_names, enumerate_files,
