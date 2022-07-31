@@ -48,11 +48,11 @@ def compress_file(input_file, output_file):
         doc.Save(output_file, SDFDoc.e_linearized)
         doc.Close()
     except Exception as e:
-        print("Error al comprimir=", type(e))
+        print(f"\nError al comprimir [{input_file}]")
         try:
             doc.Close()
         except Exception as error:
-            print("***", type(error))
+            print("***:", type(error))
         return False
     compressed_size = os.path.getsize(output_file)
     return (initial_size, compressed_size)
