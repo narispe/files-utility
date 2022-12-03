@@ -88,7 +88,7 @@ def choose_mkv_modify(files_paths, dir_path):
     audio_choose, subs_choose = None, None
     if op_tracks == 0:  # Omitir
         return None
-    if 0 < op_tracks < 3:
+    if op_tracks == 1 or op_tracks == 2:
         audio_choose = track_choose("Selecciona el audio: ",
                                     "audio", mkv_info)
     if op_tracks == 1 or op_tracks == 3:
@@ -109,7 +109,7 @@ def choose_mkv_modify(files_paths, dir_path):
         titles_list = load_titles_file(dir_path)
 
     output_dir = None
-    if audio_choose is not None and subs_choose is not None:
+    if audio_choose is not None or subs_choose is not None:
         op_output = handle_input("[0] Cancelar\n"
                                  "[1] Sobreescribir\n"
                                  "[2] Salida por defecto\n"

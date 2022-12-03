@@ -6,7 +6,8 @@ from easygui import diropenbox
 
 
 def init_pdf_edit():
-    PDFNet.Initialize()
+    demo_key = "demo:1650333343252:7bd26c220300000000859ea86b8e40bd390b8a93782acda0e7be174451"
+    PDFNet.Initialize(demo_key)
 
 
 def choose_pdf_modify(dir_path):

@@ -62,9 +62,17 @@ def main():
 
         elif id_action == 5:  # Distribuir
             # TODO: check len
-            labels = input("Etiquetas separados por \",\": ").split(",")
-            categories = input("Categorías respectivas separadas por \",\": ")
-            distribute(dir_path, labels, categories.split(","))
+            id_label = handle_input("[0] Cancelar\n[1] Usar plantilla de fotos\n[2] Manual\n:",
+                                    2)
+            if id_label == 0:
+                continue
+            elif id_label == 1:
+                labels = [f"{year}{month:02d}" for year in range(2006, 2023) for month in range(1, 13)]
+                categories = [f"{year}-{month:02d}" for year in range(2006, 2023) for month in range(1, 13)]
+            elif id_label == 2:
+                labels = input("Etiquetas separados por \",\": ").split(",")
+                categories = input("Categorías respectivas separadas por \",\": ").split(",")
+            distribute(dir_path, labels, categories)
 
         elif id_action == 6:  # Redistribuir
             labels = input("Etiquetas separados por \",\": ").split(",")
